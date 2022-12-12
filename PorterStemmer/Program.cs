@@ -53,38 +53,42 @@ string[] Derivational = {
         "ост", "ость"
 };
 
-string s1 = "прооотииивввоооестественном";
+//string s1 = "прооотииивввоооестественном";
+string s1 = "красивейший";
 Console.WriteLine(PorterStemmer(s1));
 
 string PorterStemmer(string word)
 {
-    string RV = GetRV(word);
-    string R1 = GetR1fromRV(RV);
-    string R2 = GetR1fromRV(GetRV(R1)); // область R1 после первого сочетания "гласная - согласная"
+    if (!GetRV(word, out string RV)) return word;
+    int RVlength = RV.Length;
 
-    /*if (!DeleteEnding(ref RV, PerfectiveGerund))     // 1 шаг
+    if (!DeleteEnding(ref RV, PerfectiveGerund))            // 1 шаг
     {
         DeleteEnding(ref RV, Reflexive);            
         if (!DeleteEnding(ref RV, Adjectival))
             if (!DeleteEnding(ref RV, Verb))
-                DeleteEnding(ref RV, Noun);
+                if (!DeleteEnding(ref RV, Noun)) return word[..(word.Length - RVlength + RV.Length)];
     }
-    if (RV[^1] == 'и') RV = RV[..^1];                // 2 шаг
+    if (RV.Length > 1 & RV[^1] == 'и') RV = RV[..^1];       // 2 шаг
 
-    
 
-    DeleteEnding(ref R2, Derivational);              // 3 шаг
-    RV = RV[..(R2.Length + GetRV(word).Length - GetR1fromRV(GetRV(GetRV(word))).Length)];
 
-    if (RV[..^2] == "нн") RV = RV[..^1];             // 4 шаг
+    if (GetR1fromRV(RV, out string R1) & GetRV(R1, out string R2) & GetR1fromRV(R2, out R2)) // GetR1fromRV(R2, out R2) - область R1 после первого сочетания "гласная - согласная"
+    {
+        int R2length = R2.Length;
+        if (DeleteEnding(ref R2, Derivational))             // 3 шаг
+            RV = RV[..(RV.Length - R2length + R2.Length)];
+    }
+
+
+    if (RV.Length > 2 & RV[..^2] == "нн") RV = RV[..^1];    // 4 шаг
     DeleteEnding(ref RV, Superlative);
-    if (RV[..^2] == "нн") RV = RV[..^1];
-    if (RV[^1] == 'ь') RV = RV[..^1];*/
-
-    return $"{RV} | {R1} | {R2}";
+    if (RV.Length > 2 & RV[..^2] == "нн") RV = RV[..^1];
+    if (RV.Length > 1 & RV[^1] == 'ь') RV = RV[..^1];
+    return word[..(word.Length - RVlength + RV.Length)];
 }
 
-string GetRV(string word) // область слова после первой гласной
+bool GetRV(string word, out string RV) // область слова после первой гласной
 {
     int ind = 0;
     bool flagVowelLetter = false;
@@ -101,10 +105,16 @@ string GetRV(string word) // область слова после первой �
         if (flagVowelLetter) break;
         else ind++;
     }
-    return word[++ind..];
+    if (++ind < word.Length)
+    {
+        RV = word[ind..];
+        return true;
+    }
+    RV = word;
+    return false;
 }
 
-string GetR1fromRV(string RV) // область слова после первого сочетания "гласная-согласная"
+bool GetR1fromRV(string RV, out string R1) // область слова после первого сочетания "гласная-согласная"
 {
     int ind = 0;
     bool flagVowelLetter = false;
@@ -125,29 +135,31 @@ string GetR1fromRV(string RV) // область слова после перво
         }
         else break;
     }
-    return RV[++ind..];
+    if (++ind < RV.Length)
+    {
+        R1 = RV[ind..];
+        return true;
+    }
+    R1 = RV;
+    return false;
 }
 
 bool DeleteEnding(ref string RV, string[] ending)
 {
     int max = 0;
-    for (int i = 0; i < ending.Length; i++)
+    for (int i = 0; i < ending.Length; i++) // итерации по массиву окончаний
     {
-        bool flagEqually = true;
-        for (int j = ending[i].Length - 1; j >= 0; j--)
-            try
-            {
-                if (ending[i][j] != RV[RV.Length - ending[i].Length + j])
+        if (ending[i].Length < RV.Length)
+        {
+            bool flagEqually = true;
+            for (int j = ending[i].Length - 1; j >= 0; j--) // итерации по концу слова
+                if (ending[i][j] != RV[RV.Length - ending[i].Length + j]) 
                 {
                     flagEqually = false;
                     break;
                 }
-            }
-            finally
-            {
-                flagEqually = false;
-            }
-        if (flagEqually & ending[i].Length > max) max = ending[i].Length;
+            if (flagEqually & ending[i].Length > max) max = ending[i].Length;
+        }    
     }
     RV = RV[^max..];
 
