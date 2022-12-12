@@ -1,5 +1,5 @@
 ﻿char[] VowelLetters = {
-        'a', 'е', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я'
+        'а', 'е', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я'
 };
 
 string[] PerfectiveGerund = {
@@ -22,14 +22,16 @@ var select0 = Participle
     (p, a) => new { p, a })
     .ToArray();
 
-string[] Adjectival = new string[Adjective.Length + select0.Length];
+string[] Adjectival = new string[Adjective.Length + select0.Length + Participle.Length];
 for (int i = 0; i < Adjective.Length; i++)
     Adjectival[i] = Adjective[i];
 for (int i = 0; i < select0.Length; i++)
     Adjectival[Adjective.Length + i] = select0[i].p + select0[i].a;
+for (int i = 0; i < Participle.Length; i++)
+    Adjectival[Adjective.Length + select0.Length + i] = Participle[i];
 
 
-    string[] Reflexive = {
+string[] Reflexive = {
         "ся", "сь"
 };
 
@@ -53,8 +55,7 @@ string[] Derivational = {
         "ост", "ость"
 };
 
-//string s1 = "прооотииивввоооестественном";
-string s1 = "красивейший";
+string s1 = "красивейше";
 Console.WriteLine(PorterStemmer(s1));
 
 string PorterStemmer(string word)
@@ -62,24 +63,37 @@ string PorterStemmer(string word)
     if (!GetRV(word, out string RV)) return word;
     int RVlength = RV.Length;
 
+    Console.WriteLine(RV);
+
     if (!DeleteEnding(ref RV, PerfectiveGerund))            // 1 шаг
     {
-        DeleteEnding(ref RV, Reflexive);            
+        Console.WriteLine(RV);
+        DeleteEnding(ref RV, Reflexive);
         if (!DeleteEnding(ref RV, Adjectival))
             if (!DeleteEnding(ref RV, Verb))
-                if (!DeleteEnding(ref RV, Noun)) return word[..(word.Length - RVlength + RV.Length)];
+                if (!DeleteEnding(ref RV, Noun))
+                {
+                    Console.WriteLine($"RV {RV}");
+                    return word[..(word.Length - RVlength + RV.Length)];
+                }
     }
+    Console.WriteLine($"до RV {RV}");
     if (RV.Length > 1 & RV[^1] == 'и') RV = RV[..^1];       // 2 шаг
 
 
-
+    
     if (GetR1fromRV(RV, out string R1) & GetRV(R1, out string R2) & GetR1fromRV(R2, out R2)) // GetR1fromRV(R2, out R2) - область R1 после первого сочетания "гласная - согласная"
     {
+        Console.WriteLine($"RV {RV}");
+        Console.WriteLine($"R1 {R1}");
+        Console.WriteLine($"R2 {R2}");
         int R2length = R2.Length;
         if (DeleteEnding(ref R2, Derivational))             // 3 шаг
             RV = RV[..(RV.Length - R2length + R2.Length)];
     }
+    else return word[..(word.Length - RVlength + RV.Length)];
 
+    Console.WriteLine($"идем дальше");
 
     if (RV.Length > 2 & RV[..^2] == "нн") RV = RV[..^1];    // 4 шаг
     DeleteEnding(ref RV, Superlative);
@@ -102,6 +116,7 @@ bool GetRV(string word, out string RV) // область слова после �
                 break;
             }
         }
+        
         if (flagVowelLetter) break;
         else ind++;
     }
@@ -161,7 +176,8 @@ bool DeleteEnding(ref string RV, string[] ending)
             if (flagEqually & ending[i].Length > max) max = ending[i].Length;
         }    
     }
-    RV = RV[^max..];
+    RV = RV[..^max];
+    Console.WriteLine($"DeleteEnding {ending[0]}: max {max} | RV[^max..] {RV}");
 
     if (max > 0) return true; return false;
 }
