@@ -55,7 +55,7 @@ string[] Derivational = {
         "ост", "ость"
 };
 
-string s1 = "красивейше";
+string s1 = "красивейшая";
 Console.WriteLine(PorterStemmer(s1));
 
 string PorterStemmer(string word)
@@ -67,7 +67,6 @@ string PorterStemmer(string word)
 
     if (!DeleteEnding(ref RV, PerfectiveGerund))            // 1 шаг
     {
-        Console.WriteLine(RV);
         DeleteEnding(ref RV, Reflexive);
         if (!DeleteEnding(ref RV, Adjectival))
             if (!DeleteEnding(ref RV, Verb))
@@ -77,7 +76,6 @@ string PorterStemmer(string word)
                     return word[..(word.Length - RVlength + RV.Length)];
                 }
     }
-    Console.WriteLine($"до RV {RV}");
     if (RV.Length > 1 & RV[^1] == 'и') RV = RV[..^1];       // 2 шаг
 
 
@@ -93,7 +91,7 @@ string PorterStemmer(string word)
     }
     else return word[..(word.Length - RVlength + RV.Length)];
 
-    Console.WriteLine($"идем дальше");
+    Console.WriteLine($"идем на 4 шаг");
 
     if (RV.Length > 2 & RV[..^2] == "нн") RV = RV[..^1];    // 4 шаг
     DeleteEnding(ref RV, Superlative);
